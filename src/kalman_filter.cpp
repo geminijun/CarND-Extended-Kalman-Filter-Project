@@ -1,4 +1,6 @@
 #include "kalman_filter.h"
+#include <iostream>
+using namespace std;
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -31,8 +33,7 @@ void KalmanFilter::Update_Helper(const VectorXd &y) {
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
-  MatrixXd K = PHt * Si;
+  MatrixXd K = P_ * Ht * Si;
 
   //new estimate
   x_ = x_ + (K * y);
@@ -47,19 +48,7 @@ void KalmanFilter::Update(const VectorXd &z) {
     * update the state by using Kalman Filter equations
   */
   VectorXd z_pred = H_ * x_;
-//  Update_Helper(z - z_pred);
-  VectorXd y = z - z_pred;
-  MatrixXd Ht = H_.transpose();
-  MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
-  MatrixXd K = PHt * Si;
-
-  //new estimate
-  x_ = x_ + (K * y);
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  P_ = (I - K * H_) * P_;
+  Update_Helper(z - z_pred);
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
@@ -73,7 +62,12 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   float vy = x_(3);
 
   float rho = sqrt(px*px + py*py);
-  float phi = atan2(py, px);
+  float phi;
+  if (px == 0 && py == 0) {
+    phi = 0;
+  } else {
+    phi = atan2(py, px);
+  }
   float rho_dot;
   if (fabs(rho) < 0.0001) {
     rho_dot = 0;
@@ -82,17 +76,9 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   }
   VectorXd z_pred(3);
   z_pred << rho, phi, rho_dot;
-//  Update_Helper(z - z_pred);
   VectorXd y = z - z_pred;
-  MatrixXd Ht = H_.transpose();
-  MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
-  MatrixXd K = PHt * Si;
-
-  //new estimate
-  x_ = x_ + (K * y);
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  P_ = (I - K * H_) * P_;
+  // normalised phi to make it between [-pi, +pi]
+  if (y(1) < -M_PI) y(1) += 2*M_PI;
+  if (y(1) > M_PI) y(1) -= 2*M_PI;
+  Update_Helper(y);
 }

@@ -76,7 +76,6 @@ int main()
           		meas_package.raw_measurements_ << px, py;
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
-                cout << "raw_measurements_ = " << meas_package.raw_measurements_ << endl;
 
           } else if (sensor_type.compare("R") == 0) {
 
@@ -91,7 +90,6 @@ int main()
           		meas_package.raw_measurements_ << ro,theta, ro_dot;
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
-                cout << "raw_measurements_ = " << meas_package.raw_measurements_ << endl;
           }
           float x_gt;
     	  float y_gt;
@@ -128,10 +126,6 @@ int main()
     	  estimations.push_back(estimate);
 
     	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
-
-  cout << "x_ = " << fusionEKF.ekf_.x_ << endl;
-  cout << "gt = " << gt_values << endl;
-  cout << "RMSE = " << RMSE << endl;
 
           json msgJson;
           msgJson["estimate_x"] = p_x;
